@@ -1,0 +1,549 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>TDS Intelligence — Dashboard</title>
+  <link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;600;700;800&family=JetBrains+Mono:wght@300;400;500&display=swap" rel="stylesheet"/>
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css"/>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+  <link rel="stylesheet" href="css/dashboard.css"/>
+</head>
+<body>
+
+<!-- SIDEBAR -->
+<aside class="sidebar" id="sidebar">
+  <div class="sidebar-brand">
+    <div class="brand-icon"><i class="bi bi-diagram-3-fill"></i></div>
+    <div class="brand-info">
+      <div class="brand-name">TDS Intel</div>
+      <div class="brand-ver">v2.0</div>
+    </div>
+    <button class="sidebar-collapse-btn" id="collapse-btn" onclick="toggleSidebar()">
+      <i class="bi bi-layout-sidebar-reverse"></i>
+    </button>
+  </div>
+
+  <div class="sidebar-section-label">WORKSPACE</div>
+  <nav class="sidebar-nav">
+    <a href="#" class="nav-item active" data-panel="overview" onclick="switchPanel('overview',this)">
+      <i class="bi bi-grid-1x2-fill"></i><span>Overview</span>
+    </a>
+    <a href="#" class="nav-item" data-panel="upload" onclick="switchPanel('upload',this)">
+      <i class="bi bi-cloud-upload-fill"></i><span>Upload TDS</span>
+      <span class="nav-badge" id="nav-queue-badge" style="display:none">0</span>
+    </a>
+    <a href="#" class="nav-item" data-panel="search" onclick="switchPanel('search',this)">
+      <i class="bi bi-search-heart-fill"></i><span>Search Resins</span>
+    </a>
+    <a href="#" class="nav-item" data-panel="records" onclick="switchPanel('records',this)">
+      <i class="bi bi-table"></i><span>All Records</span>
+      <span class="nav-count" id="nav-count">0</span>
+    </a>
+  </nav>
+
+  <div class="sidebar-section-label" style="margin-top:8px">TOOLS</div>
+  <nav class="sidebar-nav">
+    <a href="#" class="nav-item" data-panel="export" onclick="switchPanel('export',this)">
+      <i class="bi bi-file-earmark-spreadsheet-fill"></i><span>Export Data</span>
+    </a>
+    <a href="#" class="nav-item" data-panel="settings" onclick="switchPanel('settings',this)">
+      <i class="bi bi-gear-fill"></i><span>API Settings</span>
+    </a>
+  </nav>
+
+  <div class="sidebar-footer">
+    <div class="user-info" id="user-info">
+      <div class="user-avatar"><i class="bi bi-person-fill"></i></div>
+      <div class="user-meta">
+        <div class="user-name" id="user-name">admin</div>
+        <div class="user-role" id="user-role">Administrator</div>
+      </div>
+    </div>
+    <button class="logout-btn" onclick="logout()" title="Logout">
+      <i class="bi bi-box-arrow-right"></i>
+    </button>
+  </div>
+</aside>
+
+<!-- MAIN -->
+<div class="main" id="main-content">
+
+  <!-- TOPBAR -->
+  <header class="topbar">
+    <div class="topbar-left">
+      <button class="mobile-menu-btn" onclick="toggleSidebar()"><i class="bi bi-list"></i></button>
+      <div class="page-breadcrumb">
+        <span class="breadcrumb-parent">TDS Intelligence</span>
+        <i class="bi bi-chevron-right"></i>
+        <span class="breadcrumb-current" id="breadcrumb-current">Overview</span>
+      </div>
+    </div>
+    <div class="topbar-right">
+      <div class="topbar-stat">
+        <i class="bi bi-database-fill-check"></i>
+        <span id="topbar-records">0</span> records
+      </div>
+      <div class="topbar-stat">
+        <i class="bi bi-cpu-fill"></i>
+        <span class="status-live">LIVE</span>
+      </div>
+      <button class="topbar-btn" onclick="switchPanel('export', document.querySelector('[data-panel=export]'))" title="Export Excel">
+        <i class="bi bi-download"></i>
+      </button>
+      <button class="topbar-btn" onclick="logout()" title="Logout">
+        <i class="bi bi-power"></i>
+      </button>
+    </div>
+  </header>
+
+  <!-- CONTENT AREA -->
+  <div class="content">
+
+    <!-- ══════════════ OVERVIEW PANEL ══════════════ -->
+    <section class="panel active" id="panel-overview">
+      <div class="panel-header">
+        <div>
+          <h1 class="panel-title">Overview</h1>
+          <p class="panel-sub">Real-time summary of your resin intelligence database</p>
+        </div>
+        <button class="btn btn-primary" onclick="switchPanel('upload', document.querySelector('[data-panel=upload]'))">
+          <i class="bi bi-plus-lg"></i> Add Resins
+        </button>
+      </div>
+
+      <!-- KPI Cards -->
+      <div class="kpi-grid">
+        <div class="kpi-card kpi-blue">
+          <div class="kpi-icon"><i class="bi bi-database-fill"></i></div>
+          <div class="kpi-body">
+            <div class="kpi-value" id="kpi-total">0</div>
+            <div class="kpi-label">Total Records</div>
+            <div class="kpi-trend" id="kpi-total-trend">Awaiting data</div>
+          </div>
+        </div>
+        <div class="kpi-card kpi-teal">
+          <div class="kpi-icon"><i class="bi bi-file-earmark-pdf-fill"></i></div>
+          <div class="kpi-body">
+            <div class="kpi-value" id="kpi-links">0</div>
+            <div class="kpi-label">With TDS Link</div>
+            <div class="kpi-trend" id="kpi-link-pct">0% verified</div>
+          </div>
+        </div>
+        <div class="kpi-card kpi-amber">
+          <div class="kpi-icon"><i class="bi bi-upc-scan"></i></div>
+          <div class="kpi-body">
+            <div class="kpi-value" id="kpi-cas">0</div>
+            <div class="kpi-label">CAS Numbers</div>
+            <div class="kpi-trend" id="kpi-cas-pct">0% identified</div>
+          </div>
+        </div>
+        <div class="kpi-card kpi-purple">
+          <div class="kpi-icon"><i class="bi bi-buildings-fill"></i></div>
+          <div class="kpi-body">
+            <div class="kpi-value" id="kpi-mfr">0</div>
+            <div class="kpi-label">Manufacturers</div>
+            <div class="kpi-trend">Unique companies</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Two column layout -->
+      <div class="overview-grid">
+        <!-- Recent Records -->
+        <div class="ov-card">
+          <div class="ov-card-header">
+            <span><i class="bi bi-clock-history"></i> Recent Extractions</span>
+            <button class="btn-link" onclick="switchPanel('records', document.querySelector('[data-panel=records]'))">View all <i class="bi bi-arrow-right"></i></button>
+          </div>
+          <div id="recent-list" class="recent-list">
+            <div class="empty-state-sm">
+              <i class="bi bi-inbox"></i>
+              <span>No records yet</span>
+            </div>
+          </div>
+        </div>
+
+        <!-- Quick Actions -->
+        <div class="ov-card">
+          <div class="ov-card-header"><span><i class="bi bi-lightning-fill"></i> Quick Actions</span></div>
+          <div class="quick-actions">
+            <button class="qa-btn" onclick="switchPanel('upload', document.querySelector('[data-panel=upload]'))">
+              <div class="qa-icon qa-blue"><i class="bi bi-cloud-upload-fill"></i></div>
+              <div class="qa-info">
+                <div class="qa-title">Bulk Upload TDS</div>
+                <div class="qa-sub">Upload multiple PDF files</div>
+              </div>
+              <i class="bi bi-chevron-right qa-arrow"></i>
+            </button>
+            <button class="qa-btn" onclick="switchPanel('search', document.querySelector('[data-panel=search]'))">
+              <div class="qa-icon qa-teal"><i class="bi bi-search"></i></div>
+              <div class="qa-info">
+                <div class="qa-title">Search by Name</div>
+                <div class="qa-sub">AI-powered resin lookup</div>
+              </div>
+              <i class="bi bi-chevron-right qa-arrow"></i>
+            </button>
+            <button class="qa-btn" onclick="exportToExcel()">
+              <div class="qa-icon qa-green"><i class="bi bi-file-earmark-excel-fill"></i></div>
+              <div class="qa-info">
+                <div class="qa-title">Export to Excel</div>
+                <div class="qa-sub">Download Sheet3 format</div>
+              </div>
+              <i class="bi bi-chevron-right qa-arrow"></i>
+            </button>
+            <button class="qa-btn" onclick="switchPanel('settings', document.querySelector('[data-panel=settings]'))">
+              <div class="qa-icon qa-amber"><i class="bi bi-key-fill"></i></div>
+              <div class="qa-info">
+                <div class="qa-title">Configure APIs</div>
+                <div class="qa-sub">Set Anthropic & Perplexity keys</div>
+              </div>
+              <i class="bi bi-chevron-right qa-arrow"></i>
+            </button>
+          </div>
+        </div>
+      </div>
+
+      <!-- Progress bar chart by resin type -->
+      <div class="ov-card" style="margin-top:20px">
+        <div class="ov-card-header"><span><i class="bi bi-bar-chart-fill"></i> Records by Resin Type</span></div>
+        <div id="type-chart" class="type-chart">
+          <div class="empty-state-sm"><i class="bi bi-bar-chart"></i><span>No data to chart</span></div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ══════════════ UPLOAD PANEL ══════════════ -->
+    <section class="panel" id="panel-upload">
+      <div class="panel-header">
+        <div>
+          <h1 class="panel-title">Upload TDS Files</h1>
+          <p class="panel-sub">Upload bulk PDF Technical Data Sheets — AI extracts all structured data automatically</p>
+        </div>
+      </div>
+
+      <!-- Drop Zone -->
+      <div class="drop-zone" id="drop-zone" onclick="document.getElementById('file-input').click()" ondragover="onDragOver(event)" ondragleave="onDragLeave(event)" ondrop="onDrop(event)">
+        <div class="dz-icon"><i class="bi bi-cloud-arrow-up-fill"></i></div>
+        <div class="dz-title">Drop TDS PDF files here</div>
+        <div class="dz-sub">or click to browse from your computer</div>
+        <div class="dz-formats">
+          <span class="fmt-tag"><i class="bi bi-filetype-pdf"></i> PDF</span>
+          <span class="fmt-tag"><i class="bi bi-files"></i> Multiple Files</span>
+          <span class="fmt-tag"><i class="bi bi-lightning-fill"></i> Bulk Upload</span>
+        </div>
+      </div>
+      <input type="file" id="file-input" multiple accept=".pdf" style="display:none" onchange="addFiles([...this.files])"/>
+
+      <!-- Queue -->
+      <div id="upload-queue" style="display:none; margin-top:20px">
+        <div class="section-label-row">
+          <span><i class="bi bi-list-task"></i> Upload Queue (<span id="queue-count">0</span> files)</span>
+          <div style="display:flex;gap:8px">
+            <button class="btn btn-sm btn-primary" id="process-btn" onclick="processAllPDFs()">
+              <i class="bi bi-play-fill" id="process-icon"></i>
+              <span id="process-text">Extract All</span>
+            </button>
+            <button class="btn btn-sm btn-outline" onclick="clearQueue()"><i class="bi bi-trash3"></i> Clear</button>
+          </div>
+        </div>
+
+        <div id="queue-list" class="queue-list"></div>
+
+        <!-- Progress -->
+        <div id="upload-progress" class="progress-block" style="display:none">
+          <div class="progress-info">
+            <span id="progress-label">Processing...</span>
+            <span id="progress-pct" class="pct-text">0%</span>
+          </div>
+          <div class="progress-track"><div class="progress-fill" id="progress-fill" style="width:0%"></div></div>
+        </div>
+
+        <!-- Log -->
+        <div id="upload-log" class="log-panel" style="display:none"></div>
+      </div>
+    </section>
+
+    <!-- ══════════════ SEARCH PANEL ══════════════ -->
+    <section class="panel" id="panel-search">
+      <div class="panel-header">
+        <div>
+          <h1 class="panel-title">Search by Resin Name</h1>
+          <p class="panel-sub">Enter grade names — AI searches the web via Perplexity and extracts TDS data automatically</p>
+        </div>
+      </div>
+
+      <div class="search-layout">
+        <div class="search-left">
+          <div class="field-block">
+            <label class="field-label"><i class="bi bi-input-cursor-text"></i> Resin Grade Names</label>
+            <textarea class="field-textarea" id="resin-names-input" rows="12" placeholder="Enter one resin grade name per line:&#10;&#10;WANOL-F3156&#10;PBT CHIPS TH6120G&#10;CELCON F20-03&#10;MAKROLON AL2447&#10;APEC 1895&#10;..."></textarea>
+            <div class="field-hint"><i class="bi bi-info-circle"></i> One name per line — paste from your Excel Sheet1</div>
+          </div>
+          <div style="display:flex;gap:10px;margin-top:14px">
+            <button class="btn btn-primary" id="search-btn" onclick="searchResins()">
+              <i class="bi bi-search" id="search-icon"></i>
+              <span id="search-text">Search & Extract All</span>
+            </button>
+            <button class="btn btn-outline" onclick="document.getElementById('resin-names-input').value=''">
+              <i class="bi bi-x-lg"></i> Clear
+            </button>
+          </div>
+
+          <div id="search-progress" class="progress-block" style="display:none;margin-top:16px">
+            <div class="progress-info">
+              <span id="search-progress-label">Searching...</span>
+              <span id="search-progress-pct" class="pct-text">0%</span>
+            </div>
+            <div class="progress-track"><div class="progress-fill" id="search-progress-fill" style="width:0%"></div></div>
+          </div>
+          <div id="search-log" class="log-panel" style="display:none;margin-top:12px"></div>
+        </div>
+
+        <div class="search-right">
+          <div class="info-card">
+            <div class="info-card-title"><i class="bi bi-lightbulb-fill"></i> How it works</div>
+            <div class="info-steps">
+              <div class="info-step"><div class="step-num">1</div><div>Paste resin grade names (one per line)</div></div>
+              <div class="info-step"><div class="step-num">2</div><div>AI searches the web for each TDS document</div></div>
+              <div class="info-step"><div class="step-num">3</div><div>Claude extracts structured chemical data</div></div>
+              <div class="info-step"><div class="step-num">4</div><div>Records saved to your dashboard automatically</div></div>
+            </div>
+          </div>
+          <div class="info-card" style="margin-top:14px">
+            <div class="info-card-title"><i class="bi bi-key-fill"></i> Required APIs</div>
+            <div class="api-status-list">
+              <div class="api-status-row">
+                <span><i class="bi bi-broadcast"></i> Perplexity (Web Search)</span>
+                <span class="api-dot" id="pplx-status-dot"><i class="bi bi-circle-fill"></i></span>
+              </div>
+              <div class="api-status-row">
+                <span><i class="bi bi-cpu"></i> Anthropic (Claude)</span>
+                <span class="api-dot" id="ant-status-dot"><i class="bi bi-circle-fill"></i></span>
+              </div>
+            </div>
+            <button class="btn btn-sm btn-outline" style="margin-top:10px;width:100%" onclick="switchPanel('settings', document.querySelector('[data-panel=settings]'))">
+              <i class="bi bi-gear"></i> Configure API Keys
+            </button>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ══════════════ RECORDS PANEL ══════════════ -->
+    <section class="panel" id="panel-records">
+      <div class="panel-header">
+        <div>
+          <h1 class="panel-title">All Records</h1>
+          <p class="panel-sub"><span id="records-subtitle">0 entries</span> in your resin database</p>
+        </div>
+        <div style="display:flex;gap:10px">
+          <button class="btn btn-primary" onclick="exportToExcel()"><i class="bi bi-download"></i> Export Excel</button>
+          <button class="btn btn-outline" onclick="clearAllData()"><i class="bi bi-trash3"></i> Clear All</button>
+        </div>
+      </div>
+
+      <!-- Filters -->
+      <div class="table-filters">
+        <div class="search-input-wrap">
+          <i class="bi bi-search search-input-icon"></i>
+          <input type="text" class="search-input" id="table-search" placeholder="Search across all fields..." oninput="filterTable()"/>
+        </div>
+        <select class="filter-select" id="filter-type" onchange="filterTable()">
+          <option value="">All Resin Types</option>
+        </select>
+        <select class="filter-select" id="filter-country" onchange="filterTable()">
+          <option value="">All Countries</option>
+        </select>
+        <button class="btn btn-sm btn-outline" onclick="clearFilters()"><i class="bi bi-x-lg"></i> Reset</button>
+      </div>
+
+      <!-- Table -->
+      <div class="table-wrap">
+        <div class="table-scroll">
+          <table id="main-table">
+            <thead>
+              <tr>
+                <th style="width:40px">#</th>
+                <th>Resin Grade Name</th>
+                <th>Resin Type</th>
+                <th>Chemical Name</th>
+                <th>Manufacturer</th>
+                <th>Country</th>
+                <th>Chemical Formula</th>
+                <th>CAS Number</th>
+                <th>EINECS</th>
+                <th>Applications</th>
+                <th>TDS Link</th>
+                <th style="width:80px">Actions</th>
+              </tr>
+            </thead>
+            <tbody id="table-body"></tbody>
+          </table>
+        </div>
+        <div id="table-empty" class="table-empty-state" style="display:none">
+          <i class="bi bi-inbox-fill"></i>
+          <p>No records found</p>
+          <small>Upload TDS PDFs or search by resin name to populate your database</small>
+        </div>
+      </div>
+
+      <!-- Pagination -->
+      <div class="pagination-bar" id="pagination-bar"></div>
+    </section>
+
+    <!-- ══════════════ EXPORT PANEL ══════════════ -->
+    <section class="panel" id="panel-export">
+      <div class="panel-header">
+        <div>
+          <h1 class="panel-title">Export Data</h1>
+          <p class="panel-sub">Download your resin database in multiple formats</p>
+        </div>
+      </div>
+
+      <div class="export-grid">
+        <div class="export-card" onclick="exportToExcel()">
+          <div class="export-icon" style="color:#22c55e"><i class="bi bi-file-earmark-excel-fill"></i></div>
+          <div class="export-title">Excel (.xlsx)</div>
+          <div class="export-sub">Full data — Sheet1 + Sheet3 format matching your template</div>
+          <button class="btn btn-primary" style="margin-top:16px;width:100%"><i class="bi bi-download"></i> Download Excel</button>
+        </div>
+        <div class="export-card" onclick="exportCSV()">
+          <div class="export-icon" style="color:#0ea5e9"><i class="bi bi-filetype-csv"></i></div>
+          <div class="export-title">CSV (.csv)</div>
+          <div class="export-sub">Comma-separated — compatible with any spreadsheet app</div>
+          <button class="btn btn-outline" style="margin-top:16px;width:100%"><i class="bi bi-download"></i> Download CSV</button>
+        </div>
+        <div class="export-card" onclick="exportJSON()">
+          <div class="export-icon" style="color:#f59e0b"><i class="bi bi-filetype-json"></i></div>
+          <div class="export-title">JSON (.json)</div>
+          <div class="export-sub">Raw structured data for developers and APIs</div>
+          <button class="btn btn-outline" style="margin-top:16px;width:100%"><i class="bi bi-download"></i> Download JSON</button>
+        </div>
+        <div class="export-card" onclick="copyCSV()">
+          <div class="export-icon" style="color:#8b5cf6"><i class="bi bi-clipboard-data-fill"></i></div>
+          <div class="export-title">Copy as CSV</div>
+          <div class="export-sub">Copy all data to clipboard, paste directly into Google Sheets</div>
+          <button class="btn btn-outline" style="margin-top:16px;width:100%"><i class="bi bi-clipboard"></i> Copy to Clipboard</button>
+        </div>
+      </div>
+
+      <div class="export-summary">
+        <div class="export-summary-item"><i class="bi bi-database-fill"></i> <strong id="exp-total">0</strong> total records</div>
+        <div class="export-summary-item"><i class="bi bi-columns-gap"></i> <strong>12</strong> columns (Sheet3 format)</div>
+        <div class="export-summary-item"><i class="bi bi-calendar3"></i> Last updated: <strong id="exp-date">—</strong></div>
+      </div>
+    </section>
+
+    <!-- ══════════════ SETTINGS PANEL ══════════════ -->
+    <section class="panel" id="panel-settings">
+      <div class="panel-header">
+        <div>
+          <h1 class="panel-title">API Settings</h1>
+          <p class="panel-sub">Configure your AI service credentials</p>
+        </div>
+      </div>
+
+      <div class="settings-grid">
+        <div class="settings-card">
+          <div class="settings-card-header">
+            <div class="settings-icon"><i class="bi bi-cpu-fill"></i></div>
+            <div>
+              <div class="settings-title">Anthropic — Claude API</div>
+              <div class="settings-sub">Used for PDF extraction and resin data analysis</div>
+            </div>
+          </div>
+          <div class="field-block" style="margin-top:16px">
+            <label class="field-label">API Key</label>
+            <div class="input-wrap">
+              <input class="field-input" type="password" id="anthropic-key" placeholder="sk-ant-api03-..." />
+              <button class="input-reveal-btn" onclick="toggleField('anthropic-key', this)"><i class="bi bi-eye-fill"></i></button>
+            </div>
+          </div>
+          <div class="field-block">
+            <label class="field-label">Model</label>
+            <select class="field-input" id="claude-model">
+              <option value="claude-opus-4-20250514">Claude Opus 4 (Best quality)</option>
+              <option value="claude-sonnet-4-20250514">Claude Sonnet 4 (Faster)</option>
+            </select>
+          </div>
+          <a href="https://console.anthropic.com/settings/keys" target="_blank" class="settings-link">
+            <i class="bi bi-box-arrow-up-right"></i> Get API Key from Anthropic Console
+          </a>
+        </div>
+
+        <div class="settings-card">
+          <div class="settings-card-header">
+            <div class="settings-icon" style="background:rgba(99,102,241,0.12);color:#818cf8"><i class="bi bi-globe2"></i></div>
+            <div>
+              <div class="settings-title">Perplexity — Web Search API</div>
+              <div class="settings-sub">Used to search for TDS documents by resin name</div>
+            </div>
+          </div>
+          <div class="field-block" style="margin-top:16px">
+            <label class="field-label">API Key</label>
+            <div class="input-wrap">
+              <input class="field-input" type="password" id="perplexity-key" placeholder="pplx-..." />
+              <button class="input-reveal-btn" onclick="toggleField('perplexity-key', this)"><i class="bi bi-eye-fill"></i></button>
+            </div>
+          </div>
+          <div class="field-block">
+            <label class="field-label">Search Model</label>
+            <select class="field-input" id="pplx-model">
+              <option value="llama-3.1-sonar-large-128k-online">Sonar Large (Recommended)</option>
+              <option value="llama-3.1-sonar-small-128k-online">Sonar Small (Faster)</option>
+            </select>
+          </div>
+          <a href="https://www.perplexity.ai/settings/api" target="_blank" class="settings-link">
+            <i class="bi bi-box-arrow-up-right"></i> Get API Key from Perplexity
+          </a>
+        </div>
+      </div>
+
+      <div class="settings-actions">
+        <button class="btn btn-primary" onclick="saveSettings()">
+          <i class="bi bi-floppy2-fill"></i> Save All Settings
+        </button>
+        <button class="btn btn-outline" onclick="testAPIs()">
+          <i class="bi bi-patch-check"></i> Test Connections
+        </button>
+      </div>
+
+      <div class="security-note">
+        <i class="bi bi-shield-lock-fill"></i>
+        <span>API keys are stored only in your browser's localStorage. They are never sent to any server other than Anthropic and Perplexity directly from your browser.</span>
+      </div>
+    </section>
+
+  </div><!-- /content -->
+</div><!-- /main -->
+
+<!-- ══════════ DETAIL MODAL ══════════ -->
+<div class="modal-overlay" id="detail-modal" onclick="closeModal(event)">
+  <div class="modal-box">
+    <div class="modal-header">
+      <div>
+        <h3 class="modal-title" id="modal-grade-name">Resin Details</h3>
+        <div class="modal-subtitle" id="modal-resin-type">—</div>
+      </div>
+      <button class="modal-close-btn" onclick="closeModalDirect()"><i class="bi bi-x-lg"></i></button>
+    </div>
+    <div class="modal-body" id="modal-body"></div>
+    <div class="modal-footer">
+      <button class="btn btn-outline" onclick="closeModalDirect()">Close</button>
+      <button class="btn btn-primary" id="modal-tds-btn" style="display:none" onclick="">
+        <i class="bi bi-file-earmark-pdf-fill"></i> Open TDS
+      </button>
+      <button class="btn btn-outline" id="modal-website-btn" style="display:none" onclick="">
+        <i class="bi bi-globe2"></i> Manufacturer Site
+      </button>
+    </div>
+  </div>
+</div>
+
+<!-- TOAST CONTAINER -->
+<div class="toast-container" id="toast-container"></div>
+
+<script src="js/dashboard.js"></script>
+</body>
+</html>

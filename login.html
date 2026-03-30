@@ -1,0 +1,346 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>TDS Intelligence Platform — Sign In</title>
+  <link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;600;700;800&family=JetBrains+Mono:wght@300;400;500&display=swap" rel="stylesheet"/>
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css"/>
+  <style>
+    :root {
+      --bg: #07090d;
+      --surface: #0e1117;
+      --surface2: #161c26;
+      --border: #1e2532;
+      --border2: #2a3445;
+      --accent: #0ea5e9;
+      --accent-glow: rgba(14,165,233,0.18);
+      --accent-dim: rgba(14,165,233,0.08);
+      --text: #e2e8f0;
+      --muted: #64748b;
+      --dim: #334155;
+      --danger: #ef4444;
+      --success: #22c55e;
+      --mono: 'JetBrains Mono', monospace;
+      --sans: 'Syne', sans-serif;
+    }
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    html, body { height: 100%; }
+
+    body {
+      background: var(--bg);
+      color: var(--text);
+      font-family: var(--mono);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      min-height: 100vh;
+      overflow: hidden;
+      position: relative;
+    }
+
+    /* Animated background grid */
+    .bg-grid {
+      position: fixed; inset: 0; z-index: 0; overflow: hidden;
+      background-image:
+        linear-gradient(rgba(14,165,233,0.04) 1px, transparent 1px),
+        linear-gradient(90deg, rgba(14,165,233,0.04) 1px, transparent 1px);
+      background-size: 48px 48px;
+    }
+    .bg-glow {
+      position: fixed;
+      width: 600px; height: 600px;
+      border-radius: 50%;
+      background: radial-gradient(circle, rgba(14,165,233,0.07) 0%, transparent 70%);
+      top: -200px; left: -200px;
+      pointer-events: none; z-index: 0;
+      animation: drift 12s ease-in-out infinite alternate;
+    }
+    .bg-glow2 {
+      position: fixed;
+      width: 500px; height: 500px;
+      border-radius: 50%;
+      background: radial-gradient(circle, rgba(99,102,241,0.05) 0%, transparent 70%);
+      bottom: -150px; right: -150px;
+      pointer-events: none; z-index: 0;
+      animation: drift2 16s ease-in-out infinite alternate;
+    }
+    @keyframes drift { from { transform: translate(0,0); } to { transform: translate(60px, 80px); } }
+    @keyframes drift2 { from { transform: translate(0,0); } to { transform: translate(-40px, -60px); } }
+
+    /* Scan line effect */
+    body::after {
+      content: '';
+      position: fixed; inset: 0; z-index: 0;
+      background: repeating-linear-gradient(0deg, transparent, transparent 2px, rgba(0,0,0,0.03) 2px, rgba(0,0,0,0.03) 4px);
+      pointer-events: none;
+    }
+
+    .login-wrap {
+      position: relative; z-index: 1;
+      width: 100%; max-width: 440px;
+      padding: 24px;
+      animation: fadeUp 0.5s ease both;
+    }
+    @keyframes fadeUp { from { opacity: 0; transform: translateY(24px); } to { opacity: 1; transform: translateY(0); } }
+
+    /* Brand */
+    .brand {
+      text-align: center;
+      margin-bottom: 36px;
+    }
+    .brand-mark {
+      display: inline-flex; align-items: center; justify-content: center;
+      width: 56px; height: 56px; border-radius: 14px;
+      background: linear-gradient(135deg, #0ea5e9 0%, #0284c7 100%);
+      box-shadow: 0 0 32px rgba(14,165,233,0.3), 0 0 60px rgba(14,165,233,0.1);
+      margin-bottom: 16px;
+      font-size: 26px; color: #fff;
+    }
+    .brand-title {
+      font-family: var(--sans); font-size: 22px; font-weight: 800;
+      color: var(--text); letter-spacing: -0.5px;
+      margin-bottom: 4px;
+    }
+    .brand-sub {
+      font-size: 11px; color: var(--muted); letter-spacing: 1.5px; text-transform: uppercase;
+    }
+
+    /* Card */
+    .card {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 16px;
+      padding: 36px;
+      box-shadow: 0 24px 64px rgba(0,0,0,0.4), 0 0 0 1px rgba(14,165,233,0.04);
+      position: relative; overflow: hidden;
+    }
+    .card::before {
+      content: '';
+      position: absolute; top: 0; left: 0; right: 0; height: 1px;
+      background: linear-gradient(90deg, transparent, rgba(14,165,233,0.4), transparent);
+    }
+
+    .card-title {
+      font-family: var(--sans); font-size: 18px; font-weight: 700;
+      margin-bottom: 4px;
+    }
+    .card-sub { font-size: 12px; color: var(--muted); margin-bottom: 28px; }
+
+    /* Form */
+    .form-group { margin-bottom: 18px; }
+    .form-label {
+      display: flex; align-items: center; gap: 6px;
+      font-size: 11px; font-weight: 500; color: var(--muted);
+      text-transform: uppercase; letter-spacing: 0.8px;
+      margin-bottom: 8px;
+    }
+    .form-label i { font-size: 13px; }
+    .input-wrap { position: relative; }
+    .form-control {
+      width: 100%;
+      background: var(--bg);
+      border: 1px solid var(--border2);
+      border-radius: 10px;
+      padding: 12px 42px 12px 14px;
+      color: var(--text);
+      font-family: var(--mono);
+      font-size: 13px;
+      outline: none;
+      transition: border-color 0.2s, box-shadow 0.2s;
+    }
+    .form-control:focus {
+      border-color: var(--accent);
+      box-shadow: 0 0 0 3px var(--accent-dim);
+    }
+    .form-control::placeholder { color: var(--dim); }
+    .input-icon {
+      position: absolute; right: 13px; top: 50%; transform: translateY(-50%);
+      color: var(--dim); font-size: 15px; cursor: pointer;
+      transition: color 0.2s;
+    }
+    .input-icon:hover { color: var(--muted); }
+
+    /* Remember + Forgot */
+    .form-options {
+      display: flex; align-items: center; justify-content: space-between;
+      margin-bottom: 24px; font-size: 12px;
+    }
+    .remember { display: flex; align-items: center; gap: 7px; cursor: pointer; color: var(--muted); }
+    .remember input[type="checkbox"] {
+      width: 15px; height: 15px; accent-color: var(--accent); cursor: pointer;
+    }
+    .forgot { color: var(--accent); text-decoration: none; font-size: 12px; transition: opacity 0.2s; }
+    .forgot:hover { opacity: 0.75; }
+
+    /* Submit button */
+    .btn-login {
+      width: 100%; padding: 13px;
+      background: linear-gradient(135deg, #0ea5e9, #0284c7);
+      border: none; border-radius: 10px;
+      color: #fff; font-family: var(--sans); font-size: 14px; font-weight: 700;
+      cursor: pointer; letter-spacing: 0.3px;
+      transition: box-shadow 0.2s, transform 0.15s;
+      display: flex; align-items: center; justify-content: center; gap: 8px;
+      box-shadow: 0 4px 20px rgba(14,165,233,0.25);
+    }
+    .btn-login:hover { box-shadow: 0 6px 28px rgba(14,165,233,0.4); transform: translateY(-1px); }
+    .btn-login:active { transform: translateY(0); }
+    .btn-login:disabled { opacity: 0.6; cursor: not-allowed; transform: none; }
+
+    /* Alert */
+    .alert {
+      padding: 11px 14px; border-radius: 8px;
+      font-size: 12px; margin-bottom: 18px;
+      display: none; align-items: center; gap: 8px;
+    }
+    .alert.error { background: rgba(239,68,68,0.1); border: 1px solid rgba(239,68,68,0.3); color: #fca5a5; }
+    .alert.success { background: rgba(34,197,94,0.1); border: 1px solid rgba(34,197,94,0.3); color: #86efac; }
+    .alert.show { display: flex; }
+
+    /* Footer */
+    .login-footer {
+      text-align: center; margin-top: 24px;
+      font-size: 11px; color: var(--dim);
+    }
+    .version-pill {
+      display: inline-flex; align-items: center; gap: 5px;
+      padding: 3px 10px; border-radius: 20px;
+      border: 1px solid var(--border); color: var(--dim); font-size: 10px;
+      margin-top: 10px;
+    }
+    .dot-live { width: 6px; height: 6px; border-radius: 50%; background: var(--success); animation: blink 1.5s ease-in-out infinite; }
+    @keyframes blink { 0%,100%{opacity:1;} 50%{opacity:0.3;} }
+
+    /* Spinner */
+    @keyframes spin { to { transform: rotate(360deg); } }
+    .spin { display: inline-block; animation: spin 0.7s linear infinite; }
+  </style>
+</head>
+<body>
+  <div class="bg-grid"></div>
+  <div class="bg-glow"></div>
+  <div class="bg-glow2"></div>
+
+  <div class="login-wrap">
+    <div class="brand">
+      <div class="brand-mark"><i class="bi bi-diagram-3-fill"></i></div>
+      <div class="brand-title">TDS Intelligence</div>
+      <div class="brand-sub">Resin Data Platform</div>
+    </div>
+
+    <div class="card">
+      <div class="card-title">Welcome back</div>
+      <div class="card-sub">Sign in to your workspace</div>
+
+      <div class="alert error" id="alert-error">
+        <i class="bi bi-exclamation-triangle-fill"></i>
+        <span id="alert-msg">Invalid credentials</span>
+      </div>
+      <div class="alert success" id="alert-success">
+        <i class="bi bi-check-circle-fill"></i>
+        <span>Login successful. Redirecting...</span>
+      </div>
+
+      <form id="login-form" onsubmit="handleLogin(event)" autocomplete="off">
+        <div class="form-group">
+          <label class="form-label"><i class="bi bi-person"></i> Username</label>
+          <div class="input-wrap">
+            <input class="form-control" type="text" id="username" placeholder="Enter your username" autocomplete="username" />
+            <i class="bi bi-person-fill input-icon"></i>
+          </div>
+        </div>
+
+        <div class="form-group">
+          <label class="form-label"><i class="bi bi-lock"></i> Password</label>
+          <div class="input-wrap">
+            <input class="form-control" type="password" id="password" placeholder="Enter your password" autocomplete="current-password" id="pwd-input"/>
+            <i class="bi bi-eye-fill input-icon" id="pwd-toggle" onclick="togglePwd()" style="cursor:pointer"></i>
+          </div>
+        </div>
+
+        <div class="form-options">
+          <label class="remember">
+            <input type="checkbox" id="remember"> Keep me signed in
+          </label>
+          <a href="#" class="forgot">Forgot password?</a>
+        </div>
+
+        <button class="btn-login" type="submit" id="login-btn">
+          <i class="bi bi-box-arrow-in-right" id="login-icon"></i>
+          <span id="login-text">Sign In</span>
+        </button>
+      </form>
+    </div>
+
+    <div class="login-footer">
+      <div>TDS Intelligence Platform &copy; 2025</div>
+      <div class="version-pill">
+        <span class="dot-live"></span> v2.0 — Production
+      </div>
+    </div>
+  </div>
+
+<script>
+  // Demo credentials — replace with server-side auth
+  const USERS = [
+    { username: 'admin', password: 'admin@123', role: 'admin' },
+    { username: 'demo',  password: 'demo123',   role: 'viewer' }
+  ];
+
+  function togglePwd() {
+    const inp = document.getElementById('pwd-input') || document.getElementById('password');
+    const ico = document.getElementById('pwd-toggle');
+    if (inp.type === 'password') { inp.type = 'text'; ico.className = 'bi bi-eye-slash-fill input-icon'; }
+    else { inp.type = 'password'; ico.className = 'bi bi-eye-fill input-icon'; }
+  }
+
+  function showAlert(type, msg) {
+    document.getElementById('alert-error').classList.remove('show');
+    document.getElementById('alert-success').classList.remove('show');
+    if (type === 'error') { document.getElementById('alert-msg').textContent = msg; document.getElementById('alert-error').classList.add('show'); }
+    if (type === 'success') document.getElementById('alert-success').classList.add('show');
+  }
+
+  function setLoading(on) {
+    const btn = document.getElementById('login-btn');
+    const ico = document.getElementById('login-icon');
+    const txt = document.getElementById('login-text');
+    btn.disabled = on;
+    ico.className = on ? 'bi bi-arrow-repeat spin' : 'bi bi-box-arrow-in-right';
+    txt.textContent = on ? 'Signing in...' : 'Sign In';
+  }
+
+  function handleLogin(e) {
+    e.preventDefault();
+    const u = document.getElementById('username').value.trim();
+    const p = document.getElementById('password').value;
+    const rem = document.getElementById('remember').checked;
+
+    if (!u || !p) { showAlert('error', 'Please enter username and password.'); return; }
+    setLoading(true);
+
+    setTimeout(() => {
+      const user = USERS.find(x => x.username === u && x.password === p);
+      if (user) {
+        const session = { username: user.username, role: user.role, ts: Date.now() };
+        if (rem) localStorage.setItem('tds_session', JSON.stringify(session));
+        else sessionStorage.setItem('tds_session', JSON.stringify(session));
+        showAlert('success');
+        setTimeout(() => window.location.href = 'dashboard.html', 900);
+      } else {
+        setLoading(false);
+        showAlert('error', 'Invalid username or password.');
+        document.getElementById('password').value = '';
+      }
+    }, 800);
+  }
+
+  // Auto-login if valid session
+  window.onload = () => {
+    const s = JSON.parse(localStorage.getItem('tds_session') || sessionStorage.getItem('tds_session') || 'null');
+    if (s && (Date.now() - s.ts < 86400000 * 7)) window.location.href = 'dashboard.html';
+  };
+</script>
+</body>
+</html>
