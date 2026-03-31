@@ -44,10 +44,10 @@ function logout() {
 
 // ─── SETTINGS ─────────────────────────────────────────────────────────────────
 function loadSettings() {
-  document.getElementById('anthropic-key').value  = localStorage.getItem('tds_anthropic_key')  || '';
-  document.getElementById('perplexity-key').value = localStorage.getItem('tds_perplexity_key') || '';
+  document.getElementById('anthropic-key').value  = ((window.TDS_CONFIG && window.TDS_CONFIG.anthropic_key) ? window.TDS_CONFIG.anthropic_key : localStorage.getItem('tds_anthropic_key'))  || '';
+  document.getElementById('perplexity-key').value = ((window.TDS_CONFIG && window.TDS_CONFIG.perplexity_key) ? window.TDS_CONFIG.perplexity_key : localStorage.getItem('tds_perplexity_key')) || '';
   document.getElementById('claude-model').value   = localStorage.getItem('tds_claude_model')   || 'claude-opus-4-20250514';
-  document.getElementById('pplx-model').value     = localStorage.getItem('tds_pplx_model')     || 'llama-3.1-sonar-large-128k-online';
+  document.getElementById('pplx-model').value     = localStorage.getItem('tds_pplx_model')     || 'sonar-pro';
 }
 
 function saveSettings() {
@@ -70,8 +70,8 @@ function toggleField(id, btn) {
 }
 
 async function testAPIs() {
-  const ak = localStorage.getItem('tds_anthropic_key');
-  const pk = localStorage.getItem('tds_perplexity_key');
+  const ak = ((window.TDS_CONFIG && window.TDS_CONFIG.anthropic_key) ? window.TDS_CONFIG.anthropic_key : localStorage.getItem('tds_anthropic_key'));
+  const pk = ((window.TDS_CONFIG && window.TDS_CONFIG.perplexity_key) ? window.TDS_CONFIG.perplexity_key : localStorage.getItem('tds_perplexity_key'));
   if (!ak && !pk) { toast('No API keys configured', 'error'); return; }
   toast('Testing connections...', 'info');
   if (ak) {
@@ -84,8 +84,8 @@ async function testAPIs() {
 }
 
 function updateAPIStatus() {
-  const ak = localStorage.getItem('tds_anthropic_key');
-  const pk = localStorage.getItem('tds_perplexity_key');
+  const ak = ((window.TDS_CONFIG && window.TDS_CONFIG.anthropic_key) ? window.TDS_CONFIG.anthropic_key : localStorage.getItem('tds_anthropic_key'));
+  const pk = ((window.TDS_CONFIG && window.TDS_CONFIG.perplexity_key) ? window.TDS_CONFIG.perplexity_key : localStorage.getItem('tds_perplexity_key'));
   const antDot = document.getElementById('ant-status-dot');
   const pplxDot = document.getElementById('pplx-status-dot');
   if (antDot) { antDot.className = 'api-dot ' + (ak ? 'ok' : 'missing'); }
@@ -297,7 +297,7 @@ Return ONLY the JSON object. No markdown. No preamble. File: ${filename}`;
 // ─── PROCESS ALL PDFs ─────────────────────────────────────────────────────────
 async function processAllPDFs() {
   if (isProcessing) return;
-  const apiKey = localStorage.getItem('tds_anthropic_key');
+  const apiKey = ((window.TDS_CONFIG && window.TDS_CONFIG.anthropic_key) ? window.TDS_CONFIG.anthropic_key : localStorage.getItem('tds_anthropic_key'));
   if (!apiKey) { toast('Please configure your Anthropic API key in Settings', 'error'); switchPanel('settings', document.querySelector('[data-panel=settings]')); return; }
 
   const pending = fileQueue.filter(q => q.status === 'pending');
@@ -359,7 +359,7 @@ async function searchResinPerplexity(name, pplxKey, model) {
     method: 'POST',
     headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${pplxKey}` },
     body: JSON.stringify({
-      model: model || 'llama-3.1-sonar-large-128k-online',
+      model: model || 'sonar-pro',
       messages: [{
         role: 'system',
         content: 'You are a chemical TDS data expert. Always return ONLY valid JSON, no other text, no markdown.'
@@ -416,8 +416,8 @@ Return ONLY JSON.`
 
 // ─── SEARCH RESINS ────────────────────────────────────────────────────────────
 async function searchResins() {
-  const pplxKey = localStorage.getItem('tds_perplexity_key');
-  const apiKey  = localStorage.getItem('tds_anthropic_key');
+  const pplxKey = ((window.TDS_CONFIG && window.TDS_CONFIG.perplexity_key) ? window.TDS_CONFIG.perplexity_key : localStorage.getItem('tds_perplexity_key'));
+  const apiKey  = ((window.TDS_CONFIG && window.TDS_CONFIG.anthropic_key) ? window.TDS_CONFIG.anthropic_key : localStorage.getItem('tds_anthropic_key'));
   if (!pplxKey && !apiKey) { toast('Please configure API keys in Settings', 'error'); return; }
 
   const names = document.getElementById('resin-names-input').value.split('\n').map(s => s.trim()).filter(Boolean);
@@ -430,7 +430,7 @@ async function searchResins() {
   document.getElementById('search-log').innerHTML = '';
   document.getElementById('search-log').style.display = 'block';
 
-  const pplxModel = localStorage.getItem('tds_pplx_model') || 'llama-3.1-sonar-large-128k-online';
+  const pplxModel = localStorage.getItem('tds_pplx_model') || 'sonar-pro';
   const claudeModel = localStorage.getItem('tds_claude_model') || 'claude-opus-4-20250514';
   let done = 0, failed = 0;
 
